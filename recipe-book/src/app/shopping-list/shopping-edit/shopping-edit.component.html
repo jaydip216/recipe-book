@@ -10,7 +10,8 @@
               class="form-control"
               ngModel
               name="name"
-              #nameInput>
+              required
+              >
           </div> 
           <div class="col-sm-2 form-group">
             <label for="amount">Amount</label>
@@ -20,14 +21,19 @@
               class="form-control"
               ngModel
               name="amount"
-              #amountInput>
+              required
+              >
           </div>
         </div>
         <div class="row">
           <div class="col-xs-12">
-            <button class="btn btn-success" type="submit">Add</button>
-            <button class="btn btn-danger" type="button">Delete</button>
-            <button class="btn btn-primary" type="button" (click)="onClear()">Clear</button>
+            <button class="btn btn-success" type="submit"
+                    [disabled]="!ingForm.valid">{{ editMode ? 'Update':'Add' }}</button>
+            <button class="btn btn-danger" type="button"
+                    *ngIf="editMode"
+                    (click)="onDelete()">Delete</button>
+            <button class="btn btn-primary" type="button" 
+                    (click)="onClear()">Clear</button>
           </div>
         </div>
       </form>
