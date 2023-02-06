@@ -1,3 +1,4 @@
+import { HttpClient } from "@angular/common/http";
 import { EventEmitter, Injectable } from "@angular/core";
 import { Subject } from "rxjs";
 import { Ingredient } from "../shared/ingredient.model";
@@ -6,53 +7,62 @@ import { Recipe } from "./recipe.model";
 
 @Injectable()
 export class RecipesService {
-    recipesChanged= new Subject<Recipe[]>();
-    constructor(private shoppingListService:ShoppingListService){}
-    private recipes: Recipe[] = [
-        new Recipe(
-            'Biriyani',
-            'Hyndrabadi Biriyani',
-            'https://upload.wikimedia.org/wikipedia/commons/c/cf/Biryani_of_Lahore.jpg',
-            [
-                new Ingredient('Rice', 1),
-                new Ingredient('Water', 1)
-            ]
-        ),
-        new Recipe(
-            'Burger',
-            'Veg Burger',
-            'https://nishkitchen.com/wp-content/uploads/2012/02/Beef-Burger-Patty-2-Ways-1B.jpg',
-            [
-                new Ingredient('Tomato', 1),
-                new Ingredient('Onion', 1)
-            ]
-        ),
-    ]
+    recipesChanged = new Subject<Recipe[]>();
+    constructor(private shoppingListService: ShoppingListService,
+        private http: HttpClient) { }
+    private recipes: Recipe[] = [];
 
     getRecipes() {
         return this.recipes.slice();
     }
 
-    addToShoppingList(ingredients:Ingredient[]){
+    addToShoppingList(ingredients: Ingredient[]) {
         this.shoppingListService.addIngredients(ingredients);
     }
 
-    getRecipe(index:number){
+    getRecipe(index: number) {
         return this.recipes[index];
     }
 
-    addRecipe(recipe:Recipe){
+    addRecipe(recipe: Recipe) {
         this.recipes.push(recipe);
         this.recipesChanged.next(this.recipes.slice());
     }
 
-    updateRecipe(index:number,recipe:Recipe){
-        this.recipes[index]=recipe;
+    updateRecipe(index: number, recipe: Recipe) {
+        this.recipes[index] = recipe;
         this.recipesChanged.next(this.recipes.slice());
     }
 
-    deleteRecipe(index:number){
-        this.recipes.splice(index,1);
+    deleteRecipe(index: number) {
+        this.recipes.splice(index, 1);
+        this.recipesChanged.next(this.recipes.slice());
+    }
+
+    save() {
+        console.log('Save Recipe');
+        this.http.post("http://localhost:8080/v1/recipe-book/recipes", this.recipes)
+            .subscribe(
+                (response) => {
+                    console.log(response);
+                }
+            )
+    }
+
+    fetch() {
+        if (this.recipes.length === 0) {
+            console.log('Get Recipes');
+            this.http.get<Recipe[]>("http://localhost:8080/v1/recipe-book/recipes")
+                .subscribe(
+                    (response) => {
+                        this.setRecipe(response);
+                    }
+                )
+        }
+    }
+
+    setRecipe(recipes: Recipe[]) {
+        this.recipes = recipes;
         this.recipesChanged.next(this.recipes.slice());
     }
 }
