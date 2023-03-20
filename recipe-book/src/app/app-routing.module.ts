@@ -1,6 +1,7 @@
 import { NgModule } from "@angular/core";
 import { flush } from "@angular/core/testing";
 import { Route, RouterModule } from "@angular/router";
+import { AuthComponent } from "./auth/auth.component";
 import { RecipeEditComponent } from "./recipes/recipe-edit/recipe-edit.component";
 import { RecipesDetailComponent } from "./recipes/recipes-detail/recipes-detail.component";
 import { RecipesStartComponent } from "./recipes/recipes-start/recipes-start.component";
@@ -21,6 +22,9 @@ const appRouts: Route[] = [
     },
     { 
         path: 'shopping-list', component: ShoppingListComponent 
+    },
+    {
+        path: 'auth', component: AuthComponent
     }
 ]
 
