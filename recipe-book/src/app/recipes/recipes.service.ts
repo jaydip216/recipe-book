@@ -1,68 +1,97 @@
 import { HttpClient } from "@angular/common/http";
-import { EventEmitter, Injectable } from "@angular/core";
+import { Injectable } from "@angular/core";
 import { Subject } from "rxjs";
-import { Ingredient } from "../shared/ingredient.model";
-import { ShoppingListService } from "../shopping-list/shopping-list.service";
 import { Recipe } from "./recipe.model";
 
 @Injectable()
 export class RecipesService {
     recipesChanged = new Subject<Recipe[]>();
-    constructor(private shoppingListService: ShoppingListService,
-        private http: HttpClient) { }
+    recipeChanged = new Subject<Recipe>();
     private recipes: Recipe[] = [];
+    private recipe: Recipe;
+
+    constructor(
+        private http: HttpClient) { }
 
     getRecipes() {
+        this.fetch();
         return this.recipes.slice();
     }
 
-    addToShoppingList(ingredients: Ingredient[]) {
-        this.shoppingListService.addIngredients(ingredients);
-    }
-
-    getRecipe(index: number) {
-        return this.recipes[index];
+    getRecipe() {
+        return this.recipe;
     }
 
     addRecipe(recipe: Recipe) {
-        this.recipes.push(recipe);
-        this.recipesChanged.next(this.recipes.slice());
+        this.save(recipe);
     }
 
-    updateRecipe(index: number, recipe: Recipe) {
-        this.recipes[index] = recipe;
-        this.recipesChanged.next(this.recipes.slice());
+    updateRecipe(recipeId: number, recipe: Recipe) {
+        this.update(recipeId, recipe)
     }
 
-    deleteRecipe(index: number) {
-        this.recipes.splice(index, 1);
-        this.recipesChanged.next(this.recipes.slice());
+    deleteRecipe(recipeId: number) {
+        this.delete(recipeId);
     }
 
-    save() {
-        console.log('Save Recipe');
-        this.http.post("http://localhost:8080/v1/recipe-book/recipes", this.recipes)
+    fetch() {
+        console.log('Get Recipes');
+        this.http.get<Recipe[]>("http://localhost:8080/v1/recipe-book/recipe")
             .subscribe(
                 (response) => {
-                    console.log(response);
+                    this.setRecipes(response);
+                }
+            )
+
+    }
+
+    setRecipes(recipes: Recipe[]) {
+        this.recipes = recipes;
+        this.recipesChanged.next(this.recipes.slice());
+    }
+
+    getByRecipeId(recipeId: number) {
+        this.http.get<Recipe>("http://localhost:8080/v1/recipe-book/recipe" + "/" + recipeId.toString())
+            .subscribe(
+                (response) => {
+                    this.setRecipe(response);
                 }
             )
     }
 
-    fetch() {
-        if (this.recipes.length === 0) {
-            console.log('Get Recipes');
-            this.http.get<Recipe[]>("http://localhost:8080/v1/recipe-book/recipes")
-                .subscribe(
-                    (response) => {
-                        this.setRecipe(response);
-                    }
-                )
-        }
+    setRecipe(recipe: Recipe) {
+        this.recipe = recipe;
+        this.recipeChanged.next(this.recipe);
     }
 
-    setRecipe(recipes: Recipe[]) {
-        this.recipes = recipes;
-        this.recipesChanged.next(this.recipes.slice());
+    save(recipe: Recipe) {
+        console.log('save recipe');
+        this.http.post("http://localhost:8080/v1/recipe-book/recipe", recipe)
+            .subscribe(
+                (response) => {
+                    this.fetch();
+                }
+            )
     }
+
+    update(recipeId: number, recipe: Recipe) {
+        recipe.recipeId = recipeId;
+        console.log("update recipe");
+        this.http.put("http://localhost:8080/v1/recipe-book/recipe", recipe)
+            .subscribe(
+                (response) => {
+                    this.fetch();
+                }
+            )
+    }
+
+    delete(recipeId: number) {
+        this.http.delete("http://localhost:8080/v1/recipe-book/recipe" + "/" + recipeId.toString())
+            .subscribe(
+                (response) => {
+                    this.fetch();
+                }
+            )
+    }
+
 }

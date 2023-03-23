@@ -1,5 +1,6 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { Recipe } from '../recipe.model';
 import { RecipesService } from '../recipes.service';
 
@@ -8,37 +9,42 @@ import { RecipesService } from '../recipes.service';
   templateUrl: './recipes-detail.component.html',
   styleUrls: ['./recipes-detail.component.css']
 })
-export class RecipesDetailComponent implements OnInit {
+export class RecipesDetailComponent implements OnInit, OnDestroy {
 
+  subscription: Subscription;
   recipe: Recipe;
-  recipeIndex: number;
+  recipeId: number;
 
-  constructor(private recipeService:RecipesService,
-              private route: ActivatedRoute,
-              private router:Router) { 
+  constructor(private recipeService: RecipesService,
+    private route: ActivatedRoute,
+    private router: Router) {
   }
+
 
   ngOnInit(): void {
     this.route.params.subscribe(
-      (params:Params)=>{
-        this.recipeIndex = +params['index']
-        this.recipe=this.recipeService.getRecipe(this.recipeIndex);
+      (params: Params) => {
+        this.recipeId = +params['recipeId']
+        this.recipeService.getByRecipeId(this.recipeId);
+        this.subscription = this.recipeService.recipeChanged.subscribe(
+          (recipe) => {
+            this.recipe = recipe;
+          }
+        )
       }
     );
   }
 
-  addToShoppingList(){
-    this.recipeService.addToShoppingList(this.recipe.ingredients);
-    this.router.navigate(['shopping-list']);
+  editRecipe() {
+    this.router.navigate(['edit'], { relativeTo: this.route })
   }
 
-  editRecipe(){
-    this.router.navigate(['edit'],{relativeTo:this.route})
-  }
-
-  onDelete(){
-    this.recipeService.deleteRecipe(this.recipeIndex);
+  onDelete() {
+    this.recipeService.deleteRecipe(this.recipeId);
     this.router.navigate(['/recipe'])
   }
 
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe()
+  }
 }
